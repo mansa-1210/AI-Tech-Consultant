@@ -1,0 +1,27 @@
+[
+  {
+    "meeting_id": "MEETING-001",
+    "client": "Northstar Fitness",
+    "type": "initial",
+    "transcript": "Client wants a membership website with member email notifications, member import from CSV, and a custom integration with Salesforce. They want an admin dashboard. Budget is limited and launch target is six weeks."
+  },
+  {
+    "meeting_id": "MEETING-002",
+    "client": "Maple Learning",
+    "type": "initial",
+    "transcript": "Client needs a course directory website, instructor profiles, a contact form, and weekly email updates. They also ask whether student progress reports can be exported to CSV."
+  },
+  {
+    "meeting_id": "MEETING-003",
+    "client": "Harbor Realty",
+    "type": "initial",
+    "transcript": "Client wants agent profiles, property listings, a search page, and a custom connection to their existing CRM. They request a launch in four weeks and ask for an estimate."
+  },
+  {
+    "meeting_id": "MEETING-001-FU1",
+    "client": "Northstar Fitness",
+    "type": "follow_up",
+    "parent_meeting_id": "MEETING-001",
+    "transcript": "Follow-up: remove Salesforce integration from the initial launch. Add SMS notifications instead of email notifications. Keep member CSV import and admin dashboard. Launch date remains six weeks."
+  }
+]

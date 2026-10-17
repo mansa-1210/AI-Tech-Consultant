@@ -1,0 +1,352 @@
+[
+  {
+    "id": "EMAIL-001",
+    "from": "customer1@example.com",
+    "subject": "Email account setup - question 1",
+    "body": "How do I create or manage an email account for my website?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-002",
+    "from": "customer2@example.com",
+    "subject": "Email forwarding - question 2",
+    "body": "Can emails sent to my old address be forwarded to my main inbox?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-003",
+    "from": "customer3@example.com",
+    "subject": "Mass email campaign - question 3",
+    "body": "Can I send a mass email campaign to my members?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-004",
+    "from": "customer4@example.com",
+    "subject": "Membership refund - question 4",
+    "body": "What is your membership refund policy?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-005",
+    "from": "customer5@example.com",
+    "subject": "Website login - question 5",
+    "body": "I cannot log in to my admin dashboard. Can you help?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-006",
+    "from": "customer6@example.com",
+    "subject": "Billing invoice - question 6",
+    "body": "Where can I find my latest invoice?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-007",
+    "from": "customer7@example.com",
+    "subject": "Custom integration - question 7",
+    "body": "Can you build a custom integration with our CRM?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-008",
+    "from": "customer8@example.com",
+    "subject": "Domain setup - question 8",
+    "body": "How do I connect my domain to the website?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-009",
+    "from": "customer9@example.com",
+    "subject": "Member import - question 9",
+    "body": "Can I import a list of members from a spreadsheet?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-010",
+    "from": "customer10@example.com",
+    "subject": "Feature request - question 10",
+    "body": "Can you add a new dashboard widget just for our team?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-011",
+    "from": "customer11@example.com",
+    "subject": "Email account setup - question 11",
+    "body": "How do I create or manage an email account for my website?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-012",
+    "from": "customer12@example.com",
+    "subject": "Email forwarding - question 12",
+    "body": "Can emails sent to my old address be forwarded to my main inbox?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-013",
+    "from": "customer13@example.com",
+    "subject": "Mass email campaign - question 13",
+    "body": "Can I send a mass email campaign to my members?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-014",
+    "from": "customer14@example.com",
+    "subject": "Membership refund - question 14",
+    "body": "What is your membership refund policy?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-015",
+    "from": "customer15@example.com",
+    "subject": "Website login - question 15",
+    "body": "I cannot log in to my admin dashboard. Can you help?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-016",
+    "from": "customer16@example.com",
+    "subject": "Billing invoice - question 16",
+    "body": "Where can I find my latest invoice?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-017",
+    "from": "customer17@example.com",
+    "subject": "Custom integration - question 17",
+    "body": "Can you build a custom integration with our CRM?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-018",
+    "from": "customer18@example.com",
+    "subject": "Domain setup - question 18",
+    "body": "How do I connect my domain to the website?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-019",
+    "from": "customer19@example.com",
+    "subject": "Member import - question 19",
+    "body": "Can I import a list of members from a spreadsheet?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-020",
+    "from": "customer20@example.com",
+    "subject": "Feature request - question 20",
+    "body": "Can you add a new dashboard widget just for our team?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-021",
+    "from": "customer21@example.com",
+    "subject": "Email account setup - question 21",
+    "body": "How do I create or manage an email account for my website?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-022",
+    "from": "customer22@example.com",
+    "subject": "Email forwarding - question 22",
+    "body": "Can emails sent to my old address be forwarded to my main inbox?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-023",
+    "from": "customer23@example.com",
+    "subject": "Mass email campaign - question 23",
+    "body": "Can I send a mass email campaign to my members?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-024",
+    "from": "customer24@example.com",
+    "subject": "Membership refund - question 24",
+    "body": "What is your membership refund policy?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-025",
+    "from": "customer25@example.com",
+    "subject": "Website login - question 25",
+    "body": "I cannot log in to my admin dashboard. Can you help?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-026",
+    "from": "customer26@example.com",
+    "subject": "Billing invoice - question 26",
+    "body": "Where can I find my latest invoice?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-027",
+    "from": "customer27@example.com",
+    "subject": "Custom integration - question 27",
+    "body": "Can you build a custom integration with our CRM?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-028",
+    "from": "customer28@example.com",
+    "subject": "Domain setup - question 28",
+    "body": "How do I connect my domain to the website?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-029",
+    "from": "customer29@example.com",
+    "subject": "Member import - question 29",
+    "body": "Can I import a list of members from a spreadsheet?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-030",
+    "from": "customer30@example.com",
+    "subject": "Feature request - question 30",
+    "body": "Can you add a new dashboard widget just for our team?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-031",
+    "from": "customer31@example.com",
+    "subject": "Email account setup - question 31",
+    "body": "How do I create or manage an email account for my website?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-032",
+    "from": "customer32@example.com",
+    "subject": "Email forwarding - question 32",
+    "body": "Can emails sent to my old address be forwarded to my main inbox?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-033",
+    "from": "customer33@example.com",
+    "subject": "Mass email campaign - question 33",
+    "body": "Can I send a mass email campaign to my members?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-034",
+    "from": "customer34@example.com",
+    "subject": "Membership refund - question 34",
+    "body": "What is your membership refund policy?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-035",
+    "from": "customer35@example.com",
+    "subject": "Website login - question 35",
+    "body": "I cannot log in to my admin dashboard. Can you help?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-036",
+    "from": "customer36@example.com",
+    "subject": "Billing invoice - question 36",
+    "body": "Where can I find my latest invoice?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-037",
+    "from": "customer37@example.com",
+    "subject": "Custom integration - question 37",
+    "body": "Can you build a custom integration with our CRM?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-038",
+    "from": "customer38@example.com",
+    "subject": "Domain setup - question 38",
+    "body": "How do I connect my domain to the website?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-039",
+    "from": "customer39@example.com",
+    "subject": "Member import - question 39",
+    "body": "Can I import a list of members from a spreadsheet?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-040",
+    "from": "customer40@example.com",
+    "subject": "Feature request - question 40",
+    "body": "Can you add a new dashboard widget just for our team?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-041",
+    "from": "customer41@example.com",
+    "subject": "Email account setup - question 41",
+    "body": "How do I create or manage an email account for my website?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-042",
+    "from": "customer42@example.com",
+    "subject": "Email forwarding - question 42",
+    "body": "Can emails sent to my old address be forwarded to my main inbox?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-043",
+    "from": "customer43@example.com",
+    "subject": "Mass email campaign - question 43",
+    "body": "Can I send a mass email campaign to my members?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-044",
+    "from": "customer44@example.com",
+    "subject": "Membership refund - question 44",
+    "body": "What is your membership refund policy?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-045",
+    "from": "customer45@example.com",
+    "subject": "Website login - question 45",
+    "body": "I cannot log in to my admin dashboard. Can you help?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-046",
+    "from": "customer46@example.com",
+    "subject": "Billing invoice - question 46",
+    "body": "Where can I find my latest invoice?",
+    "received_at": "2026-10-13T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-047",
+    "from": "customer47@example.com",
+    "subject": "Custom integration - question 47",
+    "body": "Can you build a custom integration with our CRM?",
+    "received_at": "2026-10-14T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-048",
+    "from": "customer48@example.com",
+    "subject": "Domain setup - question 48",
+    "body": "How do I connect my domain to the website?",
+    "received_at": "2026-10-15T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-049",
+    "from": "customer49@example.com",
+    "subject": "Member import - question 49",
+    "body": "Can I import a list of members from a spreadsheet?",
+    "received_at": "2026-10-16T10:15:00+05:30"
+  },
+  {
+    "id": "EMAIL-050",
+    "from": "customer50@example.com",
+    "subject": "Feature request - question 50",
+    "body": "Can you add a new dashboard widget just for our team?",
+    "received_at": "2026-10-17T10:15:00+05:30"
+  }
+]
