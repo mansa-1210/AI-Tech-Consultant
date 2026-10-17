@@ -1,0 +1,37 @@
+# Environment variables and secrets
+.env
+.env*.local
+*.key
+*.pem
+secrets/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Application logs & local data
+*.log
+logs/
+knowledge_brain/data/
