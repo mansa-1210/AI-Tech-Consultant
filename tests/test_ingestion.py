@@ -351,6 +351,20 @@ def test_save_records(tmp_path: Path):
     assert data[0]["content_hash"] == "abc123hash"
 
 
+def test_save_records_preserves_utf8_text(tmp_path: Path):
+    """UTF-8 article text must round-trip on Windows and other platforms."""
+    record = ArticleRecord(
+        url="https://example.com/unicode",
+        title="Unicode \ufeff title",
+        text="A Unicode \ufeff marker must not prevent saving.",
+        retrieval_timestamp="2026-10-18T00:00:00+00:00",
+        content_hash="unicode-hash",
+    )
+    saved_path = BrilliantDirectoriesCrawler.save_records([record], tmp_path / "unicode.json")
+    data = json.loads(saved_path.read_text(encoding="utf-8"))
+    assert data[0]["text"] == record.text
+
+
 # ---------------------------------------------------------------------------
 # Test CLI Functions
 # ---------------------------------------------------------------------------
@@ -377,12 +391,12 @@ def test_cli_inspect_sitemap(mock_inspect, capsys):
 
 
 @patch("knowledge_brain.ingestion.BrilliantDirectoriesCrawler.ingest_articles")
-def test_cli_ingest_with_limit(mock_ingest, capsys):
-    """Verify CLI --limit flag executes ingestion and prints record summary."""
+def test_cli_ingest_with_limit(mock_ingest, capsys, tmp_path: Path):
+    """Verify CLI saves UTF-8 output before displaying an article summary."""
     mock_record = ArticleRecord(
         url="https://example.com/art1",
-        title="Article One",
-        text="Content of article one.",
+        title="Article \ufeff One",
+        text="Content of article \ufeff one.",
         retrieval_timestamp="2026-10-17T00:00:00+00:00",
         content_hash="mockedhash123456789",
         metadata={"char_count": 23, "word_count": 4},
@@ -391,8 +405,11 @@ def test_cli_ingest_with_limit(mock_ingest, capsys):
 
     from knowledge_brain.ingestion import main
 
-    exit_code = main(["--limit", "1"])
+    output_path = tmp_path / "crawl-output.json"
+    exit_code = main(["--limit", "1", "--output", str(output_path)])
     assert exit_code == 0
+    saved = json.loads(output_path.read_text(encoding="utf-8"))
+    assert saved[0]["text"] == mock_record.text
     captured = capsys.readouterr()
     assert "INGESTION RESULTS: 1 Article(s) Processed" in captured.out
-    assert "Article One" in captured.out
+    assert "[OK] Saved 1 records" in captured.out

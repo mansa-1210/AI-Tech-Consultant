@@ -329,7 +329,12 @@ class KnowledgeRetriever:
         total_length = 0.0
         for article in self.articles:
             title_tokens = tokenize(article.title, remove_stopwords=True)
-            body_tokens = tokenize(article.text, remove_stopwords=True)
+            image_text = " ".join(
+                str(image.get("description", ""))
+                for image in article.metadata.get("images", [])
+                if isinstance(image, dict)
+            )
+            body_tokens = tokenize(f"{article.text} {image_text}", remove_stopwords=True)
 
             # Compute effective document length with title boosting
             effective_len = len(body_tokens) + (len(title_tokens) * self.title_boost)

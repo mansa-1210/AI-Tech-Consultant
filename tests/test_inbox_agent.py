@@ -20,3 +20,13 @@ def test_threshold_and_revocation(tmp_path,monkeypatch):
     r=agent.record_review(e,d,"approve"); assert r["state"]["autonomy_enabled"]
     r=agent.record_review(e,d,"reject"); assert not r["state"]["autonomy_enabled"]
     assert "SIMULATION ONLY" in r["notice"]
+
+@pytest.mark.parametrize(("subject", "expected"), [
+    ("Refund request", "billing"), ("Invoice copy", "billing"), ("Payment failed", "billing"),
+    ("Build an integration", "custom_work"), ("New feature request", "custom_work"),
+    ("Password reset", "account_access"), ("Locked out", "account_access"),
+    ("Domain question", "support"), ("Website issue", "support"), ("Member import", "support"),
+    ("Just saying hello", "general"), ("Campaign support", "support"), ("Price question", "billing"),
+])
+def test_email_category_matrix(subject, expected):
+    assert agent.classify_email({"subject": subject, "body": ""}) == expected

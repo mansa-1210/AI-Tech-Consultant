@@ -388,6 +388,15 @@ class TestAppConfigAndCLI:
         assert data["status"] == "healthy"
         assert data["articles_loaded"] >= 3
 
+    def test_explicit_data_path_overrides_default_corpus(self, tmp_path) -> None:
+        custom_data = tmp_path / "articles.json"
+        custom_data.write_text(json.dumps([{
+            "url": "https://example.test/article", "title": "Custom", "text": "Custom facts",
+            "retrieval_timestamp": "now", "content_hash": "custom", "metadata": {},
+        }]))
+        app = create_app(data_path=custom_data, config={"TESTING": True})
+        assert app.test_client().get("/health").get_json()["articles_loaded"] == 1
+
     def test_parse_api_cli_args_defaults(self) -> None:
         """CLI argument parser sets expected defaults."""
         args = parse_api_cli_args([])
@@ -410,3 +419,23 @@ class TestAppConfigAndCLI:
         assert args.mock is True
         assert args.debug is True
         assert args.data == "custom_articles.json"
+
+
+class TestEscalationsAndDemo:
+    def test_escalation_create_and_resolve(self, client: Client, tmp_path) -> None:
+        client.application.config["ESCALATIONS_PATH"] = str(tmp_path / "escalations.json")
+        created = client.post("/escalations", json={"question": "What is the refund policy?"})
+        assert created.status_code == 201
+        resolved = client.post(f"/escalations/{created.get_json()['id']}/resolve", json={"answer": "Ask billing."})
+        assert resolved.status_code == 200
+        assert resolved.get_json()["status"] == "resolved"
+
+    def test_health_reports_actual_gemini_provider(self, test_retriever: KnowledgeRetriever, monkeypatch) -> None:
+        monkeypatch.setenv("AI_PROVIDER", "gemini")
+        app = create_app(
+            retriever=test_retriever,
+            answerer=KnowledgeAnswerer(use_mock=False, model="gemini-test", api_key="test-key"),
+        )
+        data = app.test_client().get("/health").get_json()
+        assert data["mode"] == "gemini"
+        assert data["model"] == "gemini-test"

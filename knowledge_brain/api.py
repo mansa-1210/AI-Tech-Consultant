@@ -14,11 +14,13 @@ and Meeting to Scope of Work (Task 3).
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 from pathlib import Path
 import sys
 from typing import Any, Dict, Optional, Sequence, Union
+from uuid import uuid4
 
 from flask import Flask, Response, jsonify, request
 from werkzeug.exceptions import HTTPException
@@ -26,10 +28,10 @@ from werkzeug.exceptions import HTTPException
 try:
     from dotenv import load_dotenv
 
-    load_dotenv()
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=False)
 except ImportError:
     pass
-
 from knowledge_brain.answerer import (
     DEFAULT_CLAUDE_MODEL,
     DEFAULT_MOCK_MODEL,
@@ -45,6 +47,20 @@ from knowledge_brain.retriever import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _load_escalations(path: Path) -> list[Dict[str, Any]]:
+    """Load persisted human-review tasks, treating a missing file as empty."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, list) else []
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+def _save_escalations(path: Path, items: list[Dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def create_app(
@@ -69,13 +85,27 @@ def create_app(
     if config:
         app.config.update(config)
 
+    app.config.setdefault(
+        "ESCALATIONS_PATH",
+        str(Path(__file__).resolve().parent / "data" / "escalations.json"),
+    )
+
     # Initialize retriever
     if retriever is not None:
         app.retriever = retriever  # type: ignore[attr-defined]
     elif data_path is not None:
         app.retriever = KnowledgeRetriever(articles_path=data_path)  # type: ignore[attr-defined]
     else:
-        app.retriever = KnowledgeRetriever()  # type: ignore[attr-defined]
+        # Prefer a completed full-crawl file, while retaining the checked-in
+        # sample corpus for a clean first run and isolated tests. An explicit
+        # environment path remains available for custom deployments.
+        configured_path = os.getenv("KNOWLEDGE_BRAIN_DATA_PATH")
+        full_corpus_path = Path("knowledge_brain/data/full_articles.json")
+        selected_path: Union[str, Path] = (
+            configured_path
+            or (full_corpus_path if full_corpus_path.is_file() else DEFAULT_SAMPLE_DATA_PATH)
+        )
+        app.retriever = KnowledgeRetriever(articles_path=selected_path)  # type: ignore[attr-defined]
 
     # Initialize answerer
     if answerer is not None:
@@ -125,7 +155,7 @@ def create_app(
             jsonify({
                 "status": "healthy",
                 "service": "knowledge_brain",
-                "mode": "mock" if active_answerer.use_mock else "claude",
+                "mode": active_answerer.mode,
                 "model": (
                     DEFAULT_MOCK_MODEL if active_answerer.use_mock else active_answerer.model
                 ),
@@ -232,6 +262,7 @@ def create_app(
                 use_mock=use_mock,
                 model=default_answerer.model,
                 api_key=default_answerer.api_key,
+                provider=default_answerer.provider,
             )
         else:
             working_answerer = default_answerer
@@ -264,6 +295,52 @@ def create_app(
                 }),
                 500,
             )
+
+    @app.route("/escalations", methods=["POST"])
+    def create_escalation() -> tuple[Response, int]:
+        """Create a human-expert task for a question lacking safe evidence."""
+        if not request.is_json:
+            return jsonify({"error": "Invalid Content-Type; request must be application/json"}), 400
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or not isinstance(payload.get("question"), str):
+            return jsonify({"error": "Field 'question' must be a non-empty string"}), 400
+        question = payload["question"].strip()
+        if not question:
+            return jsonify({"error": "Field 'question' must be a non-empty string"}), 400
+
+        path = Path(app.config["ESCALATIONS_PATH"])
+        item = {
+            "id": str(uuid4()),
+            "question": question,
+            "reason": str(payload.get("reason", "insufficient_evidence")),
+            "evidence": payload.get("evidence", []),
+            "status": "open",
+            "approved_answer": None,
+        }
+        items = _load_escalations(path)
+        items.append(item)
+        _save_escalations(path, items)
+        return jsonify(item), 201
+
+    @app.route("/escalations/<escalation_id>/resolve", methods=["POST"])
+    def resolve_escalation(escalation_id: str) -> tuple[Response, int]:
+        """Record an approved expert answer; it remains auditable for later ingestion."""
+        if not request.is_json:
+            return jsonify({"error": "Invalid Content-Type; request must be application/json"}), 400
+        payload = request.get_json(silent=True)
+        answer = payload.get("answer") if isinstance(payload, dict) else None
+        if not isinstance(answer, str) or not answer.strip():
+            return jsonify({"error": "Field 'answer' must be a non-empty string"}), 400
+        path = Path(app.config["ESCALATIONS_PATH"])
+        items = _load_escalations(path)
+        for item in items:
+            if item.get("id") == escalation_id:
+                item["status"] = "resolved"
+                item["approved_answer"] = answer.strip()
+                item["supporting_url"] = payload.get("supporting_url")
+                _save_escalations(path, items)
+                return jsonify(item), 200
+        return jsonify({"error": "Escalation not found"}), 404
 
     return app
 

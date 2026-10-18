@@ -22,3 +22,23 @@ def test_followup_detects_addition_and_replacement():
     assert result["requires_reestimate"]
     assert result["client_send_allowed"] is False
     assert any(x["feature"]=="sms notifications" for x in result["changes"])
+
+import pytest
+
+@pytest.mark.parametrize("transcript,expected", [
+    ("Need member import from CSV", "member import"), ("Need CSV import", "csv import"),
+    ("We need email notifications", "email notifications"), ("Build agent profiles", "agent profiles"),
+    ("Add property listings", "property listings"), ("Create a search page", "search page"),
+    ("Need a contact form", "contact form"), ("Need instructor profiles", "instructor profiles"),
+    ("Custom integration needed", "custom integration"), ("Salesforce connection", "salesforce"),
+    ("CRM connection", "crm connection"), ("Add SMS notifications", "sms notifications"),
+    ("Custom dashboard", "custom dashboard"), ("Admin dashboard", "admin dashboard"),
+    ("Property listings and search page", "property listings"), ("Email notifications and import", "email notifications"),
+])
+def test_feature_extraction_matrix(transcript, expected):
+    assert expected in {item["feature"] for item in agent.extract_features(transcript)}
+
+def test_proposal_is_never_sendable(monkeypatch):
+    monkeypatch.setattr(agent, "ask_knowledge_brain", lambda _: {"evidence_found": False, "is_mock": True})
+    proposal=agent.create_proposal(agent.create_scope(agent.load_transcript_by_id("MEETING-001")))
+    assert proposal["client_send_allowed"] is False

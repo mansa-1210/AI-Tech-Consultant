@@ -19,7 +19,7 @@ TASK_ESTIMATES={
 "deployment and handover":(3,5),
 }
 CUSTOM_TERMS=("custom integration","salesforce","crm connection","sms notification","sms notifications","custom dashboard")
-PRODUCT_TERMS=("email notifications","member import","csv import","contact form","instructor profiles","agent profiles","property listings","search page")
+PRODUCT_TERMS=("email notifications","member import","csv import","contact form","instructor profiles","agent profiles","property listings","search page","admin dashboard")
 def load_meetings():
     return json.loads(TRANSCRIPTS_PATH.read_text(encoding="utf-8"))
 def ask_knowledge_brain(question):
@@ -72,10 +72,22 @@ def create_scope(meeting):
     tasks=estimate_tasks(features)
     return {"meeting_id":meeting.get("meeting_id"),"client":meeting.get("client"),"scope_version":1,
       "source_transcript":transcript,"features":checks,"tasks":tasks,
+      "agent_trace":["requirements analyst extracted candidate features","feasibility analyst queried Knowledge Brain API","estimation analyst applied transparent task ranges","review gate held output for human approval"],
       "hours_min":sum(t["hours_min"] for t in tasks),"hours_max":sum(t["hours_max"] for t in tasks),
       "assumptions":["Estimates are preliminary planning ranges, not a fixed quote.","Unknown product feasibility must be verified by a human using cited documentation.","Custom integrations require API, access, security and data-mapping discovery."],
       "risks":["Unverified feature feasibility","Scope and third-party API uncertainty","Client access or feedback delays"],
       "approval_status":"pending_human_approval","client_send_allowed":False,"is_mock_or_unverified":any(x["is_mock"] or x["feasibility"].startswith("unknown") for x in checks)}
+
+def create_proposal(scope):
+    """Create a client-readable proposal draft. It can never be sent automatically."""
+    deliverables = "; ".join(item["feature"] for item in scope.get("features", [])) or "Requirements discovery"
+    return {"client": scope.get("client"), "meeting_id": scope.get("meeting_id"),
+      "title": f"Draft proposal: {scope.get('client', 'Client')}",
+      "summary": f"We will validate and deliver: {deliverables}.",
+      "estimated_hours": f"{scope.get('hours_min', 0)}–{scope.get('hours_max', 0)} hours",
+      "assumptions": scope.get("assumptions", []), "risks": scope.get("risks", []),
+      "approval_status": "pending_human_approval", "client_send_allowed": False,
+      "notice": "Draft only. A human must verify feasibility, commercial terms, and approval before client delivery."}
 def compare_follow_up(original_scope, followup_meeting):
     new_features=extract_features(followup_meeting.get("transcript",""))
     original={x["feature"] for x in original_scope.get("features",[])}

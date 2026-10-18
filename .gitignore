@@ -34,4 +34,6 @@ Desktop.ini
 # Application logs & local data
 *.log
 logs/
-knowledge_brain/data/
+knowledge_brain/data/*
+!knowledge_brain/data/sample_articles.json
+.pytest-tmp/

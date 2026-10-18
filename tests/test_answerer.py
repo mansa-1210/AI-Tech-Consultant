@@ -368,7 +368,7 @@ def test_claude_mode_invokes_anthropic_offline(sample_records: list[ArticleRecor
         article=sample_records[1],
     )
 
-    with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+    with patch.dict("sys.modules", {"anthropic": mock_anthropic}), patch.dict("os.environ", {"AI_PROVIDER": "claude"}):
         answerer = KnowledgeAnswerer(
             use_mock=False,
             model="claude-3-5-sonnet-20241022",
@@ -403,7 +403,7 @@ def test_claude_mode_missing_api_key_raises(sample_records: list[ArticleRecord])
     )
 
     with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-        with patch.dict("os.environ", {"ANTHROPIC_API_KEY": ""}):
+        with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "", "AI_PROVIDER": "claude"}):
             answerer = KnowledgeAnswerer(use_mock=False, api_key="")
             with pytest.raises(ValueError, match="Anthropic API key is not configured"):
                 answerer.answer("test query", [result_item])
@@ -419,7 +419,7 @@ def test_claude_mode_missing_library_raises(sample_records: list[ArticleRecord])
         article=sample_records[0],
     )
 
-    with patch.dict("sys.modules", {"anthropic": None}):
+    with patch.dict("sys.modules", {"anthropic": None}), patch.dict("os.environ", {"AI_PROVIDER": "claude"}):
         answerer = KnowledgeAnswerer(use_mock=False, api_key="sk-ant-test")
         with pytest.raises(RuntimeError, match="The 'anthropic' package is required"):
             answerer.answer("test query", [result_item])

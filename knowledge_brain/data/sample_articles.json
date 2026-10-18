@@ -1,0 +1,38 @@
+[
+  {
+    "url": "https://support.brilliantdirectories.com/support/solutions/articles/5000558357-can-i-send-a-mass-email-campaign-using-brilliant-directories-",
+    "title": "Can I Send A Mass Email Campaign Using Brilliant Directories?",
+    "text": "Can I Send A Mass Email Campaign Using Brilliant Directories?\nThe built-in email system is designed for emailing active members who have requested to receive emails from the site. A common example would be sending a monthly newsletter to members who have opted in to receive updates.\nThe email system also sends transactional emails, such as new member signup notifications, credit card update notices, lead emails, and other system-generated messages related to member activity.\nSending mass unsolicited emails to Claim Listings or an imported contact list may be considered spam. This can violate email compliance laws, damage the sending reputation of your domain, and result in future emails being blocked or blacklisted.\nIn some cases, sending spam messages can also negatively impact other sites on the same server and may lead to account restrictions or termination with Brilliant Directories.",
+    "retrieval_timestamp": "2026-10-17T15:57:53.430752+00:00",
+    "content_hash": "7572afe5c0ec4f67f22a752a95ac3f460aba9fc70b97d046ea52f825952a355a",
+    "metadata": {
+      "char_count": 900,
+      "word_count": 139,
+      "line_count": 5
+    }
+  },
+  {
+    "url": "https://support.brilliantdirectories.com/support/solutions/articles/5000558363-emails-email-accounts",
+    "title": "Emails » Email Accounts",
+    "text": "Emails » Email Accounts\nEmail accounts (mailboxes) at the website's own domain, such as\nsupport@example.com\n, are created and managed in\nSettings > Domain Manager > Mailboxes\n. The\nEmails > Email Accounts\nmenu item opens that tab directly.\nBefore starting\nConnect a custom domain to the website. A free\ndirectoryup.com\naddress has no mailboxes of its own.\nConfirm which provider receives the domain's email. Mailboxes on the website's hosting receive new mail only when the domain's MX records point to them.\nOpen the email accounts\nIn the admin, open\nEmails\n.\nClick\nEmail Accounts\n.\nDomain Manager opens on the\nMailboxes\ntab, which lists the mailboxes, their storage use, and where the domain's email is delivered.\nEmail Accounts in the Emails menu (1) opens Domain Manager on the Mailboxes tab (2).\nCreate and manage mailboxes\nOn the\nMailboxes\ntab,\nAdd a mailbox\ncreates a new mailbox with its password and storage limit. Each mailbox in the list offers\nOpen webmail\n,\nSet up\nfor the settings to enter in Outlook, Apple Mail, or a phone, and\nMore\nfor changing the password or storage limit or deleting the mailbox. The full steps are in\nSettings » Domain Manager » Mailboxes and Email Routing\n.\nGeneric addresses such as\ninfo@\nare more often treated as spam by receiving mail systems. Addresses such as\nsupport@\n,\nadmin@\n, or\ncontact@\nare usually a better choice.\nWhen the previous Email Accounts page appears\nThe previous\nManage Email Accounts\npage still opens in two cases:\nThe website uses a free\ndirectoryup.com\naddress. The page explains that a live domain name must be connected before email accounts can be set up, and offers\nConnect Live Domain\n. See\nHow to Connect a Domain to a Brilliant Directories Website\n.\nThe administrator's role does not include access to the Domain Manager's\nMailboxes\ntab.\nOn a free directoryup.com address, Email Accounts shows the previous page with Connect Live Domain (1).\nAdditional notes\nEmail replies do not have a separate reply-to address. Responses go to the address that sent the original message.\nTo read a mailbox in the browser, see\nHow To Access Webmail Through the Admin Area\n.",
+    "retrieval_timestamp": "2026-10-17T15:57:54.305087+00:00",
+    "content_hash": "02cd7df4eb357badadfe1a9b9918a5a54cd2f447dccce3f8f00d5a1e78af5bdd",
+    "metadata": {
+      "char_count": 2130,
+      "word_count": 361,
+      "line_count": 67
+    }
+  },
+  {
+    "url": "https://support.brilliantdirectories.com/support/solutions/articles/5000558373-email-forwarders",
+    "title": "Email Forwarders",
+    "text": "Email Forwarders\nEmail Forwarders Not Supported\nIMPORTANT:\nThe Email Forwarders functionality has been removed from our implementation of cPanel as of June, 2024.\nDue to the way this functionality works in cPanel, it caused several issues for users. Some of these issue included:\nNot all emails being forwarded properly based on the domain settings of the email sender and the receiver of the forwarded email\nSendgrid blocking emails from being sent to accounts hosted in cPanel, preventing the Admins of sites from getting notification emails\nThe domain reputation and reputation of the server being harmed when SPAM emails are forwarded through this system\nWhile email forwarders can no longer be added or modified, any existing email forwarders will remain in place.  If an email forwarder needs to be removed from a site, please submit a ticket to our Support Team for assistance.\nRecommendations to Replace Email Forwarders\nThe recommended alternative for using email forwarders is to use an email app that can send and receive emails from multiple email accounts in one place:\nGmail\nPaid\nGoogle Workspace\nemail accounts can connect to 3rd party email accounts to send and receive emails.  For this, the MX record would need to be pointed to Google workspace, for more information:\nHow To Change Email MX Records\nThunderbird\nThis is a free desktop email application from Mozilla, the makers of the FireFox browser. Thunderbird offers an app for Windows, MacOS, and Linux operating systems.\nApple Mail\nApple includes a free email client that can connect to 3rd party email accounts for all of their devices and operating systems.\nMicrosoft\nWindows Mail\nand\nMicrosoft Outlook\n- Microsoft includes the Windows Mail and Outlook for Windows applications for free on devices using Windows 10 or newer. Both of these applications can connect to 3rd party email accounts.",
+    "retrieval_timestamp": "2026-10-17T15:57:55.371810+00:00",
+    "content_hash": "c356c64650c4bd4c3058b64fc80d3eba1bdecc55086cfdc891d0f58603ab4e74",
+    "metadata": {
+      "char_count": 1868,
+      "word_count": 301,
+      "line_count": 25
+    }
+  }
+]

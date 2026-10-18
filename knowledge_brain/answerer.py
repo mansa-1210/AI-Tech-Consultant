@@ -531,12 +531,104 @@ def generate_claude_answer(
     )
 
 
+def generate_gemini_answer(
+    query: str,
+    search_results: Sequence[SearchResult],
+    model: str = "gemini-2.5-flash",
+    api_key: Optional[str] = None,
+) -> AnswerResult:
+    """Generate a documentation-grounded answer using Google's Gemini API."""
+    clean_query = query.strip() if query else ""
+
+    if not clean_query or not search_results:
+        reason = "The query was empty." if not clean_query else "No matching documentation records were found."
+        return AnswerResult(
+            query=clean_query,
+            answer=f"{INSUFFICIENT_EVIDENCE_PHRASE} {reason}",
+            citations=[],
+            evidence_found=False,
+            mode="gemini",
+            model=model,
+        )
+
+    resolved_key = api_key or os.getenv("GEMINI_API_KEY")
+    if not resolved_key or resolved_key.strip() == "PASTE_YOUR_KEY_HERE":
+        raise ValueError("Set GEMINI_API_KEY in your .env file.")
+
+    try:
+        from google import genai
+    except ImportError as err:
+        raise RuntimeError(
+            "Install the Gemini SDK with: pip install google-genai"
+        ) from err
+
+    context_blocks = []
+    citations = []
+    seen_urls = set()
+
+    for index, result in enumerate(search_results, start=1):
+        content = (
+            result.article.text
+            if result.article and result.article.text
+            else result.snippet
+        )
+        context_blocks.append(
+            f"[Source {index}]\n"
+            f"Title: {result.title}\n"
+            f"URL: {result.url}\n"
+            f"Content:\n{content}\n"
+        )
+        if result.url not in seen_urls:
+            seen_urls.add(result.url)
+            citations.append(Citation(title=result.title, url=result.url))
+
+    prompt = f"""
+You are an AI technical consultant answering questions about Brilliant Directories.
+
+Answer the question using ONLY the documentation sources below.
+Do not invent facts or infer unsupported product behavior.
+If the sources do not establish the answer, reply with this exact sentence:
+"{INSUFFICIENT_EVIDENCE_PHRASE}"
+
+Cite supporting source titles and URLs in your answer.
+Do not claim that a source supports something it does not say.
+
+DOCUMENTATION SOURCES:
+{''.join(context_blocks)}
+
+USER QUESTION:
+{clean_query}
+"""
+
+    client = genai.Client(api_key=resolved_key)
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+    )
+    answer_text = (response.text or "").strip()
+
+    if not answer_text:
+        answer_text = INSUFFICIENT_EVIDENCE_PHRASE
+
+    evidence_found = INSUFFICIENT_EVIDENCE_PHRASE.lower() not in answer_text.lower()
+
+    return AnswerResult(
+        query=clean_query,
+        answer=answer_text,
+        citations=citations if evidence_found else [],
+        evidence_found=evidence_found,
+        mode="gemini",
+        model=model,
+        raw_response=answer_text,
+    )
+
+
 class KnowledgeAnswerer:
     """Knowledge Brain Answer Generation Engine.
 
     Synthesizes grounded answers strictly from retrieved documentation.
-    Supports deterministic offline mock mode (default) and Anthropic Claude
-    when configured.
+    Supports deterministic offline mock mode plus configured Anthropic Claude
+    or Google Gemini providers.
     """
 
     def __init__(
@@ -544,17 +636,31 @@ class KnowledgeAnswerer:
         use_mock: Optional[bool] = None,
         model: Optional[str] = None,
         api_key: Optional[str] = None,
+        provider: Optional[str] = None,
     ) -> None:
         """Initialize the KnowledgeAnswerer.
 
         Args:
             use_mock: Explicitly enable or disable mock mode. If None, respects USE_MOCK_AI env var.
-            model: Claude model name (defaults to CLAUDE_PRIMARY_MODEL or claude-3-5-sonnet-20241022).
-            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var).
+            model: Provider model name.
+            api_key: Provider API key.
+            provider: Optional explicit provider override ("claude" or "gemini").
         """
         self.use_mock = is_mock_ai_enabled() if use_mock is None else use_mock
-        self.model = model or os.getenv("CLAUDE_PRIMARY_MODEL", DEFAULT_CLAUDE_MODEL)
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        self.provider = (provider or os.getenv("AI_PROVIDER", "claude")).strip().lower()
+        if self.provider not in ("claude", "gemini"):
+            raise ValueError("AI_PROVIDER must be 'claude' or 'gemini'.")
+        if self.provider == "gemini":
+            self.model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        else:
+            self.model = model or os.getenv("CLAUDE_PRIMARY_MODEL", DEFAULT_CLAUDE_MODEL)
+            self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+
+    @property
+    def mode(self) -> str:
+        """Return the actual execution mode reflected in API responses."""
+        return "mock" if self.use_mock else self.provider
 
     def answer(
         self,
@@ -572,6 +678,13 @@ class KnowledgeAnswerer:
         """
         if self.use_mock:
             return generate_mock_answer(query, search_results)
+        if self.provider == "gemini":
+            return generate_gemini_answer(
+                query=query,
+                search_results=search_results,
+                model=self.model,
+                api_key=self.api_key,
+            )
         return generate_claude_answer(
             query=query,
             search_results=search_results,
@@ -686,7 +799,11 @@ def build_cli_parser() -> argparse.ArgumentParser:
 
 def format_cli_output(result: AnswerResult) -> str:
     """Format AnswerResult nicely for command line display."""
-    mode_label = "MOCK MODE (USE_MOCK_AI=true)" if result.is_mock else f"CLAUDE API ({result.model})"
+    mode_label = (
+        "MOCK MODE (USE_MOCK_AI=true)"
+        if result.is_mock
+        else f"{'GEMINI' if result.mode == 'gemini' else 'CLAUDE'} API ({result.model})"
+    )
     evidence_label = (
         f"Sufficient evidence found ({len(result.citations)} source(s))"
         if result.evidence_found
@@ -712,7 +829,8 @@ def format_cli_output(result: AnswerResult) -> str:
     if result.is_mock:
         lines.append("[NOTE] Mock mode active. Zero paid API calls made.")
     else:
-        lines.append(f"[NOTE] Generated via Anthropic Claude model {result.model}.")
+        provider_name = "Google Gemini" if result.mode == "gemini" else "Anthropic Claude"
+        lines.append(f"[NOTE] Generated via {provider_name} model {result.model}.")
 
     lines.append("=" * 68 + "\n")
     return "\n".join(lines)

@@ -2,6 +2,10 @@
 
 ## Overview
 
+> **Current provider note:** the answer service supports `AI_PROVIDER=claude` and `AI_PROVIDER=gemini`. It returns the actual execution mode and model in `/health` and `/ask`; a Gemini call is never labelled as mock or Claude.
+
+> **Dataset status (2026-10-18):** the corrected full crawl saved 1,535 valid records to `knowledge_brain/data/full_articles.json` from 1,540 sitemap URLs; five URLs were skipped. The crawler saves requested output before previews and uses UTF-8-safe console output, preventing the prior Windows display failure from discarding results.
+
 The **Knowledge Brain Ingestion Pipeline** is the first foundational component of Task 1 in the `AI-Tech-Consultant` system. Its purpose is to reliably and respectfully crawl the official Brilliant Directories Solution Center documentation, filter out non-article URLs, strip web boilerplate, and produce normalized, structured JSON article records ready for future chunking, vector indexing, and RAG retrieval.
 
 > [!NOTE]
@@ -80,7 +84,13 @@ All commands can be run via the Python module:
    python -m knowledge_brain.ingestion --limit 5 --output knowledge_brain/data/sample_articles.json
    ```
 
-4. **Custom Tuning**:
+4. **Full Crawl** (time-consuming; run once only when ready):
+   ```powershell
+   .\.venv\Scripts\python.exe -m knowledge_brain.ingestion --full --output knowledge_brain/data/full_articles.json --delay 0.5
+   ```
+   The explicit `--output` path is required for persistence. Verify the JSON record count after it completes.
+
+5. **Custom Tuning**:
    ```bash
    python -m knowledge_brain.ingestion --limit 10 --delay 1.0 --timeout 15 -v
    ```
@@ -440,4 +450,3 @@ python -m knowledge_brain.api --mock
 ```powershell
 pytest tests/test_api.py -v
 ```
-

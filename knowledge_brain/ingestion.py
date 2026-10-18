@@ -23,6 +23,7 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
 import xml.etree.ElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -246,6 +247,18 @@ def parse_article_html(html_content: str, url: str = "") -> ArticleRecord:
     ):
         link_p.decompose()
 
+    # Keep image references with their nearby accessible description.  Alt text is
+    # intentionally labelled as source-provided, rather than treated as a vision fact.
+    images = []
+    for image in article_container.find_all("img"):
+        source = image.get("src") or image.get("data-src")
+        if source:
+            images.append({
+                "url": urljoin(url, source),
+                "alt_text": image.get("alt", "").strip(),
+                "description": image.get("alt", "").strip() or "Screenshot in this article; visual review required.",
+            })
+
     raw_text = article_container.get_text(separator="\n", strip=True)
     clean_text = clean_extracted_text(raw_text)
 
@@ -258,6 +271,7 @@ def parse_article_html(html_content: str, url: str = "") -> ArticleRecord:
         "char_count": len(clean_text),
         "word_count": len(clean_text.split()) if clean_text else 0,
         "line_count": len(clean_text.splitlines()) if clean_text else 0,
+        "images": images,
     }
 
     return ArticleRecord(
@@ -498,6 +512,11 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Limit number of articles to crawl and ingest (e.g. --limit 3 for quick testing).",
     )
     parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Crawl every article URL in the sitemap. This can take many minutes; use only after checking the source policy.",
+    )
+    parser.add_argument(
         "--output",
         type=str,
         default=None,
@@ -543,6 +562,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_cli_parser()
     args = parser.parse_args(argv)
 
+    # A Windows console or redirected stream may otherwise default to a legacy
+    # code page and fail while displaying valid article text (for example U+FEFF).
+    # JSON persistence is UTF-8; keep console output compatible with it too.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
         level=log_level,
@@ -577,8 +603,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             return 0
 
         # Mode 2: Ingest articles
-        limit = args.limit
-        if limit is None:
+        if args.full and args.limit is not None:
+            parser.error("--full and --limit cannot be used together")
+        limit = None if args.full else args.limit
+        if limit is None and not args.full:
             # Beginner-safe default when running CLI without arguments:
             # Default to limit of 3 with an informative notice
             limit = 3
@@ -587,8 +615,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "To ingest a different number, specify --limit N (e.g. --limit 5).\n"
             )
 
-        print(f"\n[INFO] Ingesting up to {limit} documentation article(s)...")
+        target_label = "all sitemap article URLs" if args.full else f"up to {limit} documentation article(s)"
+        print(f"\n[INFO] Ingesting {target_label}...")
         records = crawler.ingest_articles(limit=limit)
+
+        # Persist before printing individual records. A display problem must
+        # never discard a successful crawl that the caller explicitly asked us
+        # to save.
+        if args.output:
+            crawler.save_records(records, args.output)
+            print(f"\n[OK] Saved {len(records)} records to {args.output}")
 
         print("\n" + "=" * 60)
         print(f" INGESTION RESULTS: {len(records)} Article(s) Processed")
@@ -601,10 +637,6 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"    Text Length:   {rec.metadata.get('char_count', 0)} characters / {rec.metadata.get('word_count', 0)} words")
             snippet = rec.text.replace("\n", " ")[:140]
             print(f"    Snippet:       {snippet}...")
-
-        if args.output:
-            crawler.save_records(records, args.output)
-            print(f"\n[OK] Saved {len(records)} records to {args.output}")
 
         print("=" * 60 + "\n")
         return 0
