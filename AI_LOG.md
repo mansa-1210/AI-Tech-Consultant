@@ -1,6 +1,6 @@
 # AI coding log
 
-This log records the student's genuine use of an AI coding assistant during development. It does not invent prompts, dates, model names, rejected suggestions, or outcomes.
+This log records the student's genuine use of Gemini as an AI coding assistant during development. Gemini used here is the coding assistant, not a claim about which model provider ran inside the application. This log does not invent prompts, dates, model names, rejected suggestions, or outcomes.
 
 ## Prompts used
 
@@ -12,7 +12,7 @@ This log records the student's genuine use of an AI coding assistant during deve
 
 ## How assistance was used
 
-AI assistance was used to implement and harden the Knowledge Brain, Inbox Agent, Meeting-to-SOW workflow, Gemini integration, tests, and documentation. The student retained responsibility for choosing the project scope, reviewing changes, and verifying results through tests and smoke checks.
+Gemini assistance was used to implement and harden the Knowledge Brain, Inbox Agent, Meeting-to-SOW workflow, application-provider integration, tests, and documentation. The student retained responsibility for choosing the project scope, reviewing changes, and verifying results through tests and smoke checks.
 
 ## Rejected-suggestion record
 

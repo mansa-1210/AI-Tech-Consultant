@@ -50,7 +50,7 @@ def create_app() -> Flask:
         if not isinstance(email, dict) or not isinstance(draft, dict):
             return jsonify({"error": "email and draft objects are required"}), 400
         try:
-            return jsonify(inbox.record_review(email, draft, decision, payload.get("edited_draft")))
+            return jsonify(inbox.record_review(email, draft, decision, payload.get("edited_draft"), payload.get("final_sent_draft")))
         except ValueError as error:
             return jsonify({"error": str(error)}), 400
 

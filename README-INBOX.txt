@@ -1,0 +1,1 @@
+Copy inbox_agent/ and tests/test_inbox_agent.py into the existing project, preserving current files. With .venv active run: python -m pytest -q. The Knowledge Brain should be running at http://127.0.0.1:8501. Dataset contains 50 synthetic emails. Auto-send is simulated only; no real email is sent. Mock mode is not a real Claude result.

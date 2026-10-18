@@ -134,6 +134,9 @@ class AnswerResult:
     mode: str = "mock"
     model: str = DEFAULT_MOCK_MODEL
     raw_response: Optional[str] = None
+    visual_evidence: List[Dict[str, str]] = field(default_factory=list)
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
 
     @property
     def is_mock(self) -> bool:
@@ -150,7 +153,23 @@ class AnswerResult:
             "mode": self.mode,
             "model": self.model,
             "is_mock": self.is_mock,
+            "visual_evidence": self.visual_evidence,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
         }
+
+
+def collect_visual_evidence(search_results: Sequence[SearchResult]) -> List[Dict[str, str]]:
+    """Collect de-duplicated image descriptions returned by the retriever."""
+    evidence: List[Dict[str, str]] = []
+    seen = set()
+    for result in search_results:
+        for item in result.visual_evidence:
+            key = (item.get("url", ""), item.get("description", ""))
+            if key not in seen:
+                seen.add(key)
+                evidence.append(item)
+    return evidence
 
 
 def clean_passage_spacing(text: str) -> str:
@@ -274,6 +293,7 @@ def generate_mock_answer(
             model=DEFAULT_MOCK_MODEL,
         )
 
+    visual_evidence = collect_visual_evidence(search_results)
     # Extract query tokens
     query_tokens = tokenize(clean_query, remove_stopwords=True)
     if not query_tokens:
@@ -295,6 +315,10 @@ def generate_mock_answer(
 
     for res in search_results:
         source_text = res.article.text if (res.article and res.article.text) else res.snippet
+        if res.visual_evidence:
+            source_text += "\n" + "\n".join(
+                f"Image description ({item['source']}): {item['description']}" for item in res.visual_evidence
+            )
         passages = extract_candidate_passages(source_text, title=res.title)
         if not passages and res.snippet:
             passages = [clean_passage_spacing(res.snippet)]
@@ -419,6 +443,7 @@ def generate_mock_answer(
         evidence_found=True,
         mode="mock",
         model=DEFAULT_MOCK_MODEL,
+        visual_evidence=visual_evidence,
     )
 
 
@@ -485,13 +510,17 @@ def generate_claude_answer(
     citations: List[Citation] = []
     seen_urls: Set[str] = set()
 
+    visual_evidence = collect_visual_evidence(search_results)
     for idx, res in enumerate(search_results, start=1):
         content = res.article.text if (res.article and res.article.text) else res.snippet
+        visual_context = "\n".join(
+            f"Image description ({item['source']}): {item['description']}" for item in res.visual_evidence
+        )
         context_blocks.append(
             f"[Source {idx}]\n"
             f"Title: {res.title}\n"
             f"URL: {res.url}\n"
-            f"Content:\n{content}\n"
+            f"Content:\n{content}\n{visual_context}\n"
         )
         if res.url not in seen_urls:
             seen_urls.add(res.url)
@@ -528,6 +557,9 @@ def generate_claude_answer(
         mode="claude",
         model=model,
         raw_response=answer_text,
+        visual_evidence=visual_evidence,
+        input_tokens=getattr(getattr(response, "usage", None), "input_tokens", None),
+        output_tokens=getattr(getattr(response, "usage", None), "output_tokens", None),
     )
 
 
@@ -566,17 +598,21 @@ def generate_gemini_answer(
     citations = []
     seen_urls = set()
 
+    visual_evidence = collect_visual_evidence(search_results)
     for index, result in enumerate(search_results, start=1):
         content = (
             result.article.text
             if result.article and result.article.text
             else result.snippet
         )
+        visual_context = "\n".join(
+            f"Image description ({item['source']}): {item['description']}" for item in result.visual_evidence
+        )
         context_blocks.append(
             f"[Source {index}]\n"
             f"Title: {result.title}\n"
             f"URL: {result.url}\n"
-            f"Content:\n{content}\n"
+            f"Content:\n{content}\n{visual_context}\n"
         )
         if result.url not in seen_urls:
             seen_urls.add(result.url)
@@ -620,6 +656,9 @@ USER QUESTION:
         mode="gemini",
         model=model,
         raw_response=answer_text,
+        visual_evidence=visual_evidence,
+        input_tokens=getattr(getattr(response, "usage_metadata", None), "prompt_token_count", None),
+        output_tokens=getattr(getattr(response, "usage_metadata", None), "candidates_token_count", None),
     )
 
 

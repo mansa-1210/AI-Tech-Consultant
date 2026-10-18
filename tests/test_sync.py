@@ -1,7 +1,11 @@
 import json
 
 from knowledge_brain.ingestion import ArticleRecord
-from knowledge_brain.sync import run_incremental
+from knowledge_brain.sync import DEFAULT_OUTPUT, run_incremental
+
+
+def test_default_sync_output_is_the_api_full_corpus():
+    assert DEFAULT_OUTPUT.name == "full_articles.json"
 
 
 class FakeCrawler:

@@ -283,6 +283,7 @@ def create_app(
                 "mode": result.mode,
                 "model": result.model,
                 "is_mock": result.is_mock,
+                "visual_evidence": result.visual_evidence,
             }
             return jsonify(response_data), 200
 

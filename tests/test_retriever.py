@@ -204,6 +204,19 @@ def test_retriever_relevant_match_cpanel_forwarders(sample_records: list[Article
     assert "cpanel" in top.snippet.lower() or "forwarders" in top.snippet.lower()
 
 
+def test_retriever_returns_labeled_visual_evidence():
+    article = ArticleRecord(
+        url="https://example.test/visual",
+        title="Visual setup guide",
+        text="Use the settings page to configure the feature.",
+        retrieval_timestamp="now",
+        content_hash="visual",
+        metadata={"images": [{"url": "https://example.test/toggle.png", "vision_description": "The blue publish toggle is enabled.", "description": "The blue publish toggle is enabled."}]},
+    )
+    result = KnowledgeRetriever(articles=[article]).search("blue publish toggle")[0]
+    assert result.visual_evidence == [{"url": "https://example.test/toggle.png", "description": "The blue publish toggle is enabled.", "source": "vision_description"}]
+
+
 def test_retriever_irrelevant_query(sample_records: list[ArticleRecord]):
     """Verify completely irrelevant queries return an empty result list."""
     retriever = KnowledgeRetriever(articles=sample_records)

@@ -211,6 +211,21 @@ def test_answer_relevant_evidence_forwarders(sample_retriever: KnowledgeRetrieve
     assert "removed from our implementation of cpanel" in ans.answer.lower() or "not supported" in ans.answer.lower()
 
 
+def test_answer_exposes_visual_evidence():
+    article = ArticleRecord(
+        url="https://example.test/visual",
+        title="Visual setup guide",
+        text="Use the settings page to configure the feature.",
+        retrieval_timestamp="now",
+        content_hash="visual",
+        metadata={"images": [{"url": "https://example.test/toggle.png", "vision_description": "The blue publish toggle is enabled.", "description": "The blue publish toggle is enabled."}]},
+    )
+    result = KnowledgeRetriever(articles=[article]).search("blue publish toggle")[0]
+    answer = KnowledgeAnswerer(use_mock=True).answer("Is the blue publish toggle enabled?", [result])
+    assert answer.visual_evidence[0]["source"] == "vision_description"
+    assert "blue publish toggle" in answer.answer.lower()
+
+
 def test_citation_data_structure():
     """Verify Citation dataclass and dictionary conversion."""
     cit = Citation(title="Test Doc", url="https://example.com/test")

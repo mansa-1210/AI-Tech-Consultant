@@ -14,12 +14,38 @@ def test_invalid_review_decision():
     with pytest.raises(ValueError): agent.record_review({"id":"3"},{"category":"support"},"send")
 def test_threshold_and_revocation(tmp_path,monkeypatch):
     monkeypatch.setattr(agent,"DATA_DIR",tmp_path); monkeypatch.setattr(agent,"STATE_PATH",tmp_path/"state.json"); monkeypatch.setattr(agent,"FEEDBACK_PATH",tmp_path/"feedback.jsonl")
-    e={"id":"x","subject":"email","body":"email account"}; d={"category":"support","status":"grounded_draft"}
-    for i in range(19): r=agent.record_review({"id":str(i)},d,"approve")
-    assert not r["state"]["autonomy_enabled"]
-    r=agent.record_review(e,d,"approve"); assert r["state"]["autonomy_enabled"]
-    r=agent.record_review(e,d,"reject"); assert not r["state"]["autonomy_enabled"]
+    e={"id":"x","subject":"email","body":"email account"}
+    d={"category":"support","status":"grounded_draft","draft":"Verified reply","citations":[{"url":"https://example.test"}],"is_mock":False}
+    for i in range(20): r=agent.record_review({"id":str(i)},d,"approve",final_sent_draft="Verified reply")
+    category_state=r["state"]["categories"]["support"]
+    assert category_state["autonomy_eligible"]
+    agent.enable_autonomy_trial("support", operator_approved=True)
+    r=agent.record_review(e,d,"reject",final_sent_draft="Verified reply")
+    assert not r["state"]["categories"]["support"]["autonomy_trial_enabled"]
     assert "SIMULATION ONLY" in r["notice"]
+
+def test_changed_final_text_never_qualifies_or_enables_autonomy(tmp_path,monkeypatch):
+    monkeypatch.setattr(agent,"DATA_DIR",tmp_path); monkeypatch.setattr(agent,"STATE_PATH",tmp_path/"state.json"); monkeypatch.setattr(agent,"FEEDBACK_PATH",tmp_path/"feedback.jsonl")
+    draft={"category":"support","status":"grounded_draft","draft":"Original","citations":[{"url":"https://example.test"}],"is_mock":False}
+    result=agent.record_review({"id":"x"},draft,"approve",final_sent_draft="Edited by reviewer")
+    category_state=result["state"]["categories"]["support"]
+    assert not result["feedback"]["unchanged_final_text"]
+    assert category_state["consecutive_unchanged_sends"] == 0
+    assert not result["feedback"]["simulated_auto_send"]
+
+def test_high_risk_category_cannot_start_autonomy_trial(tmp_path,monkeypatch):
+    monkeypatch.setattr(agent,"DATA_DIR",tmp_path); monkeypatch.setattr(agent,"STATE_PATH",tmp_path/"state.json"); monkeypatch.setattr(agent,"FEEDBACK_PATH",tmp_path/"feedback.jsonl")
+    with pytest.raises(ValueError): agent.enable_autonomy_trial("billing", operator_approved=True)
+
+def test_feedback_summary_and_approved_pattern(tmp_path,monkeypatch):
+    monkeypatch.setattr(agent,"DATA_DIR",tmp_path); monkeypatch.setattr(agent,"STATE_PATH",tmp_path/"state.json"); monkeypatch.setattr(agent,"FEEDBACK_PATH",tmp_path/"feedback.jsonl"); monkeypatch.setattr(agent,"PATTERNS_PATH",tmp_path/"patterns.json")
+    agent.promote_response_pattern("support","Hi there,","Regards,\nSupport","support-v2")
+    draft=agent.prepare_draft({"id":"x","subject":"domain question","body":"domain"},{"answer":"Use the domain settings.","evidence_found":True,"citations":[{"url":"https://example.test"}],"is_mock":False})
+    result=agent.record_review({"id":"x"},draft,"approve",final_sent_draft=draft["draft"])
+    summary=agent.feedback_summary()
+    assert draft["prompt_version"] == "support-v2"
+    assert result["feedback"]["unchanged_final_text"]
+    assert summary["support"]["unchanged_rate"] == 1.0
 
 @pytest.mark.parametrize(("subject", "expected"), [
     ("Refund request", "billing"), ("Invoice copy", "billing"), ("Payment failed", "billing"),

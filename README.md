@@ -3,19 +3,18 @@
 Three connected, local-first workflows for a software-services team:
 
 - **Knowledge Brain** crawls Brilliant Directories support pages, retrieves evidence with BM25, and returns grounded, cited answers through a Flask API.
-- **Inbox Agent** classifies 50 synthetic customer emails, calls that API, drafts a reply, and records human feedback. It never sends real email.
-- **Meeting-to-SOW** reads three sample client meetings plus a follow-up, calls that same API for feasibility evidence, creates a preliminary scope and estimate, and flags all client-facing output for approval.
+- **Inbox Agent** classifies 50 clearly labelled synthetic test emails, calls that API, drafts a reply, and records human feedback. It never sends real email.
+- **Meeting-to-SOW** reads three clearly labelled simulated role-play transcripts plus a simulated follow-up, calls that same API for feasibility evidence, creates a preliminary scope and estimate, and flags all client-facing output for approval. They are not recorded meetings.
 
 ## Run
 
-Windows PowerShell and Python 3.11+ are required. From the project root:
+Windows PowerShell and Python 3.11+ are required. From the project root, this one command creates the local virtual environment when needed, installs dependencies, and starts the shared API and browser console:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m app
+powershell -ExecutionPolicy Bypass -File .\start.ps1
 ```
 
-This is the one command that starts the shared API and the browser console for all three workflows. Open `http://127.0.0.1:8501`. In a second terminal, run the complete test suite:
+Open `http://127.0.0.1:8501`. In a second terminal, run tests as needed:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
@@ -23,10 +22,10 @@ This is the one command that starts the shared API and the browser console for a
 
 Copy `.env.example` to `.env`. It defaults to `USE_MOCK_AI=true` for safe, deterministic local runs. To make paid live-model calls, explicitly set `USE_MOCK_AI=false` and configure either `AI_PROVIDER=claude` with `ANTHROPIC_API_KEY` or `AI_PROVIDER=gemini` with `GEMINI_API_KEY`. The `/health` endpoint reports the actual selected provider and model. Keep `.env` out of Git.
 
-For an incremental daily refresh, schedule this command with Windows Task Scheduler (daily) after confirming the source site's crawler policy:
+For an incremental daily refresh, first review the source site's crawler policy, then register the included Windows Task Scheduler job. It writes the same `full_articles.json` corpus that the API serves:
 
 ```powershell
-.\.venv\Scripts\python.exe -m knowledge_brain.sync
+.\scripts\install_daily_sync_task.ps1
 ```
 
 For the initial full crawl, use the explicit command below rather than the safe three-article CLI default:
@@ -45,6 +44,6 @@ Set `KNOWLEDGE_BRAIN_DATA_PATH` only when using another JSON location.
 
 Open `http://127.0.0.1:8501/` for the compact demo screen. The Inbox and Meeting workflows are runnable modules and deliberately use the Knowledge Brain only through its HTTP endpoint.
 
-## Important limits
+## Evaluation and limits
 
-The local dataset currently contains 1,535 crawled articles and BM25 retrieval; it is a demonstrator, not a production vector database. Image understanding, scheduled daily sync, and real-model cost/latency measurements remain pending. All estimates are planning ranges and all customer-facing actions require human approval. See [DESIGN.md](DESIGN.md) and [EVALS.md](EVALS.md).
+The local dataset currently contains 1,535 crawled articles and BM25 retrieval. Image descriptions are retrieved and returned with their provenance (`source_alt_text` or `vision_description`); actual vision descriptions have not been generated yet. `evaluations/cases.offline.json` provides 60 fixed offline evaluation cases, and `evaluations/runner.py` prepares measured two-model runs, but no live-model results are claimed. All estimates are planning ranges and all customer-facing actions require human approval. The full corpus is locally ignored, so it must be included in the final GitHub publication or attached as a release asset for a fresh clone to use it. See [docs/offline_completion_plan.md](docs/offline_completion_plan.md), [DESIGN.md](DESIGN.md), and [EVALS.md](EVALS.md).

@@ -1,0 +1,22 @@
+[
+  {
+    "case_id": "KB-001",
+    "task": "knowledge_brain",
+    "query": "AUTHOR_THIS_FROM_A_REAL_HELD_OUT_QUESTION",
+    "expected_evidence_found": true,
+    "required_answer_terms": [],
+    "required_citation_urls": []
+  },
+  {
+    "case_id": "INBOX-001",
+    "task": "inbox_agent",
+    "email": {"id": "AUTHOR_THIS", "subject": "", "body": ""},
+    "expected_category": ""
+  },
+  {
+    "case_id": "MEETING-001",
+    "task": "meeting_to_sow",
+    "meeting": {"meeting_id": "AUTHOR_THIS", "client": "", "transcript": ""},
+    "required_features": []
+  }
+]

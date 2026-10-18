@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import time
 from typing import Any, Dict, List
 
 from knowledge_brain.ingestion import BrilliantDirectoriesCrawler, extract_article_urls
 
-DEFAULT_MANIFEST = Path("knowledge_brain/data/manifest.json")
-DEFAULT_OUTPUT = Path("knowledge_brain/data/articles.json")
+DEFAULT_MANIFEST = Path("knowledge_brain/data/full_articles_manifest.json")
+DEFAULT_OUTPUT = Path(os.getenv("KNOWLEDGE_BRAIN_DATA_PATH", "knowledge_brain/data/full_articles.json"))
 
 
 def _read_json(path: Path, fallback: Any) -> Any:

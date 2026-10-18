@@ -1,27 +1,6 @@
 [
-  {
-    "meeting_id": "MEETING-001",
-    "client": "Northstar Fitness",
-    "type": "initial",
-    "transcript": "Client wants a membership website with member email notifications, member import from CSV, and a custom integration with Salesforce. They want an admin dashboard. Budget is limited and launch target is six weeks."
-  },
-  {
-    "meeting_id": "MEETING-002",
-    "client": "Maple Learning",
-    "type": "initial",
-    "transcript": "Client needs a course directory website, instructor profiles, a contact form, and weekly email updates. They also ask whether student progress reports can be exported to CSV."
-  },
-  {
-    "meeting_id": "MEETING-003",
-    "client": "Harbor Realty",
-    "type": "initial",
-    "transcript": "Client wants agent profiles, property listings, a search page, and a custom connection to their existing CRM. They request a launch in four weeks and ask for an estimate."
-  },
-  {
-    "meeting_id": "MEETING-001-FU1",
-    "client": "Northstar Fitness",
-    "type": "follow_up",
-    "parent_meeting_id": "MEETING-001",
-    "transcript": "Follow-up: remove Salesforce integration from the initial launch. Add SMS notifications instead of email notifications. Keep member CSV import and admin dashboard. Launch date remains six weeks."
-  }
+  {"meeting_id":"MEETING-001","client":"Northstar Fitness","type":"initial","provenance":"simulated_role_play_transcript","recording_status":"not_recorded","transcript":"SIMULATED ROLE-PLAY TRANSCRIPT — not a recorded client meeting.\nConsultant: What would a successful first release include?\nClient: A membership website with member email notifications, member import from CSV, and an admin dashboard.\nConsultant: Are there integrations?\nClient: We also want a custom integration with Salesforce.\nClient: Our budget is limited and we are aiming for six weeks.\nConsultant: I will treat these as candidate requirements and verify platform feasibility before any proposal."},
+  {"meeting_id":"MEETING-002","client":"Maple Learning","type":"initial","provenance":"simulated_role_play_transcript","recording_status":"not_recorded","transcript":"SIMULATED ROLE-PLAY TRANSCRIPT — not a recorded client meeting.\nConsultant: Please describe the directory experience.\nClient: We need a course directory with instructor profiles and a contact form.\nConsultant: How will you communicate updates?\nClient: Weekly email updates to enrolled learners.\nClient: We would also like student progress reports exported to CSV.\nConsultant: I will identify what is standard configuration and what needs discovery."},
+  {"meeting_id":"MEETING-003","client":"Harbor Realty","type":"initial","provenance":"simulated_role_play_transcript","recording_status":"not_recorded","transcript":"SIMULATED ROLE-PLAY TRANSCRIPT — not a recorded client meeting.\nConsultant: What must visitors be able to find?\nClient: Agent profiles, property listings, and a search page.\nConsultant: Does information need to connect elsewhere?\nClient: Yes, a custom connection to our existing CRM.\nClient: We hope to launch in four weeks and need a preliminary estimate.\nConsultant: The estimate will be a planning range pending feasibility, access, and acceptance criteria."},
+  {"meeting_id":"MEETING-001-FU1","client":"Northstar Fitness","type":"follow_up","parent_meeting_id":"MEETING-001","provenance":"simulated_role_play_transcript","recording_status":"not_recorded","transcript":"SIMULATED ROLE-PLAY FOLLOW-UP — not a recorded client meeting.\nConsultant: We are reviewing changes against the first simulated discussion.\nClient: Remove Salesforce integration from the initial launch. Keep member CSV import and the admin dashboard.\nClient: Add SMS notifications instead of email notifications. The six-week target remains.\nConsultant: I will mark this as a scope change requiring feasibility, consent/provider review, and re-estimation before approval."}
 ]

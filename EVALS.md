@@ -8,7 +8,7 @@ The repeatable baseline is the pytest suite. It tests parsing, crawling failures
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-The suite uses repository-local temporary files so it works in restricted Windows environments. The final local run on 2026-10-18 passed 141 cases: 96 Knowledge Brain cases (answerer, API, retriever, and ingestion), 20 Inbox cases, 21 Meeting-to-SOW cases, two console cases, and two incremental-sync cases. These are implementation regression cases, not independent real-world model-quality measurements.
+The suite uses repository-local temporary files so it works in restricted Windows environments. The most recent local run on 2026-10-18 passed 150 cases. These are implementation regression cases, not independent real-world model-quality measurements.
 
 ## Quality and safety criteria
 
@@ -18,9 +18,15 @@ The suite uses repository-local temporary files so it works in restricted Window
 | Inbox | Draft uses cited Knowledge Brain result | Escalation draft; review required; no email sent |
 | Meeting-to-SOW | Features have feasibility evidence and stated assumptions | Pending approval; no proposal sent |
 
+## Fixed offline evaluation plan
+
+`evaluations/cases.offline.json` contains a fixed, authored 60-case held-out set: 20 Knowledge Brain questions, 20 Inbox Agent inputs, and 20 Meeting-to-SOW inputs. It is entirely synthetic and must be kept unchanged while comparing models. A full run entails 85 model calls: 20 Knowledge Brain calls, 20 Inbox calls, and 45 per-feature feasibility calls for the Meeting-to-SOW cases. The runner writes per-case model identifier, latency, observed token metadata, estimated cost, automatic checks, and failures.
+
+Automatic Knowledge Brain checks cover the expected evidence status and declared answer terms; a reviewer must additionally assess groundedness, completeness, citation correctness, and abstention. Inbox checks cover category and mandatory review; a reviewer must assess routing, factuality, escalation usefulness, and tone. Meeting-to-SOW checks cover candidate-feature extraction, approval state, and blocked client sending; a reviewer must assess scope completeness, feasibility interpretation, estimate assumptions, and risks. See `docs/offline_completion_plan.md` for the pre-run token and cost estimates.
+
 ## Measurements not yet claimed
 
-On 2026-10-18, a prior live Gemini `/ask` smoke test reportedly returned HTTP 200 with grounded evidence and one citation; this was not re-run here because the evaluation environment blocks outbound sockets (`WinError 10013`). After the full corpus was regenerated, a local forced-mock smoke test returned `/health` 200 with `articles_loaded: 1535`, and `/ask` 200 with grounded evidence and two citations. This verifies local corpus loading and deterministic grounded behavior only; it is not a live-model quality, cost, latency, or model-comparison result. The current Gemini integration does not expose token usage or billing data in its response, so cost is not measurable from this implementation. No paid-provider comparison, full-corpus quality measurement, or production measurement is claimed. To finish evaluation evidence, run the existing 20/20/21 regression cases plus 20 held-out cases per workflow against the completed corpus, record request latency, evidence/citation checks, human quality judgements, and failures. Run a second model only if the assignment rubric explicitly requires comparison. The API exposes the actual provider/model in `/health` and each `/ask` response so records cannot be mistaken for mock results.
+On 2026-10-18, a prior live Gemini `/ask` smoke test reportedly returned HTTP 200 with grounded evidence and one citation; this was not re-run here because the evaluation environment blocks outbound sockets (`WinError 10013`). After the full corpus was regenerated, a local forced-mock smoke test returned `/health` 200 with `articles_loaded: 1535`, and `/ask` 200 with grounded evidence and two citations. This verifies local corpus loading and deterministic grounded behavior only; it is not a live-model quality, cost, latency, or model-comparison result. The current Gemini integration now captures prompt and candidate token metadata when the SDK returns it, but no live token or billing data has been observed in this completion phase. No paid-provider comparison, full-corpus quality measurement, or production measurement is claimed. To finish evaluation evidence, run the fixed 60 held-out cases per selected model against the completed corpus, record request latency, evidence/citation checks, human quality judgements, token metadata, calculated cost, and failures. Run a second model only if the assignment rubric explicitly requires comparison. The API exposes the actual provider/model in `/health` and each `/ask` response so records cannot be mistaken for mock results.
 
 ## Known failures and mitigation
 

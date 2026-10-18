@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import logging
 import math
@@ -70,6 +70,7 @@ class SearchResult:
     snippet: str
     score: float
     article: Optional[ArticleRecord] = None
+    visual_evidence: List[Dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert search result to a standard dictionary."""
@@ -78,6 +79,7 @@ class SearchResult:
             "url": self.url,
             "snippet": self.snippet,
             "score": round(self.score, 4),
+            "visual_evidence": self.visual_evidence,
         }
 
 
@@ -234,6 +236,28 @@ def extract_relevant_snippet(
     prefix = "..." if start > 0 else ""
     suffix = "..." if end < len(chosen) else ""
     return prefix + chosen[start:end].strip() + suffix
+
+
+def collect_visual_evidence(article: ArticleRecord, query_tokens: Set[str]) -> List[Dict[str, str]]:
+    """Return query-relevant image descriptions while preserving their provenance."""
+    items: List[Dict[str, str]] = []
+    for image in article.metadata.get("images", []):
+        if not isinstance(image, dict):
+            continue
+        description = str(image.get("vision_description") or image.get("description") or image.get("alt_text") or "").strip()
+        if not description or description == "Screenshot in this article; visual review required.":
+            continue
+        description_tokens = set(tokenize(description, remove_stopwords=False))
+        if query_tokens and not description_tokens.intersection(query_tokens):
+            continue
+        items.append(
+            {
+                "url": str(image.get("url", "")),
+                "description": description,
+                "source": "vision_description" if image.get("vision_description") else "source_alt_text",
+            }
+        )
+    return items
 
 
 class KnowledgeRetriever:
@@ -438,6 +462,7 @@ class KnowledgeRetriever:
                         snippet=snippet,
                         score=score,
                         article=article,
+                        visual_evidence=collect_visual_evidence(article, query_term_set),
                     )
                 )
 
