@@ -250,6 +250,15 @@ def test_insufficient_evidence_unrelated_query(sample_retriever: KnowledgeRetrie
     assert ans.citations == []
 
 
+def test_ask_abstains_when_retrieval_has_no_product_specific_terms(sample_retriever: KnowledgeRetriever):
+    answerer = KnowledgeAnswerer(use_mock=True)
+    ans = answerer.ask("What information is available in the knowledge base?", retriever=sample_retriever)
+
+    assert ans.evidence_found is False
+    assert INSUFFICIENT_EVIDENCE_PHRASE in ans.answer
+    assert ans.citations == []
+
+
 def test_insufficient_evidence_with_mismatched_results(sample_records: list[ArticleRecord]):
     """Verify that passing irrelevant results explicitly reports insufficient evidence."""
     answerer = KnowledgeAnswerer(use_mock=True)

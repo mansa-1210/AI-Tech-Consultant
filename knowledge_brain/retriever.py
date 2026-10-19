@@ -52,6 +52,16 @@ DEFAULT_STOPWORDS: Set[str] = {
     "with", "won't", "would", "wouldn't", "you", "your", "yours", "yourself",
 }
 
+# Broad terms that describe a help collection rather than a product capability.
+# Keeping them out of the retrieval query prevents a meta-question such as
+# "what information is available in the knowledge base" from matching every
+# documentation page that mentions help or information.
+GENERIC_QUERY_TERMS: Set[str] = {
+    "answer", "answers", "available", "base", "documentation", "guide",
+    "help", "information", "knowledge", "know", "learn", "resource",
+    "resources", "support",
+}
+
 
 @dataclass
 class SearchResult:
@@ -71,6 +81,8 @@ class SearchResult:
     score: float
     article: Optional[ArticleRecord] = None
     visual_evidence: List[Dict[str, str]] = field(default_factory=list)
+    matched_terms: List[str] = field(default_factory=list)
+    query_coverage: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert search result to a standard dictionary."""
@@ -80,6 +92,8 @@ class SearchResult:
             "snippet": self.snippet,
             "score": round(self.score, 4),
             "visual_evidence": self.visual_evidence,
+            "matched_terms": self.matched_terms,
+            "query_coverage": round(self.query_coverage, 4),
         }
 
 
@@ -103,6 +117,16 @@ def tokenize(text: str, remove_stopwords: bool = True) -> List[str]:
         # fall back to preserving all tokens so search doesn't fail silently.
         return filtered if filtered else tokens
     return tokens
+
+
+def query_terms(text: str) -> List[str]:
+    """Return product-specific terms suitable for relevance matching.
+
+    Generic collection words are deliberately excluded. If a user supplies
+    only generic words, the retriever abstains rather than selecting an
+    arbitrary documentation page.
+    """
+    return [term for term in tokenize(text, remove_stopwords=True) if term not in GENERIC_QUERY_TERMS]
 
 
 def load_articles_from_json(file_path: Union[str, Path]) -> List[ArticleRecord]:
@@ -418,7 +442,7 @@ class KnowledgeRetriever:
         if not self.articles or not query or not query.strip():
             return []
 
-        query_tokens = tokenize(query, remove_stopwords=True)
+        query_tokens = query_terms(query)
         if not query_tokens:
             return []
 
@@ -427,6 +451,7 @@ class KnowledgeRetriever:
             return []
 
         query_term_set = set(query_tokens)
+        minimum_matched_terms = max(1, math.ceil(len(query_term_set) * 0.5))
         scores = [0.0] * doc_count
 
         for term in query_term_set:
@@ -448,7 +473,9 @@ class KnowledgeRetriever:
         # Filter and rank matches
         ranked_results: List[SearchResult] = []
         for idx, score in enumerate(scores):
-            if score > min_score:
+            matched_terms = query_term_set.intersection(self._doc_term_freqs[idx])
+            query_coverage = len(matched_terms) / len(query_term_set)
+            if score > min_score and len(matched_terms) >= minimum_matched_terms:
                 article = self.articles[idx]
                 snippet = extract_relevant_snippet(
                     text=article.text,
@@ -463,6 +490,8 @@ class KnowledgeRetriever:
                         score=score,
                         article=article,
                         visual_evidence=collect_visual_evidence(article, query_term_set),
+                        matched_terms=sorted(matched_terms),
+                        query_coverage=query_coverage,
                     )
                 )
 

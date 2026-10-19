@@ -12,13 +12,13 @@ from meeting_to_sow import agent as meetings
 
 
 CONSOLE_HTML = """<!doctype html><title>AI Tech Consultant</title>
-<style>body{max-width:1050px;margin:2rem auto;font:16px system-ui;line-height:1.5;background:#fafafa;color:#18212f}section{background:white;border:1px solid #dde3ea;border-radius:10px;padding:1rem;margin:1rem 0}textarea,select,button{font:inherit;padding:.55rem;margin:.2rem}textarea{width:96%;height:72px}pre{white-space:pre-wrap;background:#f3f6f8;padding:1rem;border-radius:6px;max-height:420px;overflow:auto}h1{margin-bottom:0}.note{color:#566}</style>
-<h1>AI Tech Consultant</h1><p class=note>One shared Knowledge Brain; all customer-facing results require human approval.</p>
+<style>body{max-width:1050px;margin:2rem auto;font:16px system-ui;line-height:1.5;background:#fafafa;color:#18212f}section{background:white;border:1px solid #dde3ea;border-radius:10px;padding:1rem;margin:1rem 0}textarea,select,button{font:inherit;padding:.55rem;margin:.2rem}textarea{width:96%;height:72px}pre{white-space:pre-wrap;background:#f3f6f8;padding:1rem;border-radius:6px;max-height:420px;overflow:auto}h1{margin-bottom:0}.note{color:#566}.mode{background:#fff3cd;border:1px solid #d99c00;color:#674800;font-weight:700;padding:.65rem;border-radius:6px}</style>
+<h1>AI Tech Consultant</h1><p id=mode class=mode>Checking runtime modeâ€¦</p><p class=note>One shared Knowledge Brain; all customer-facing results require human approval.</p>
 <section><h2>1. Knowledge Brain</h2><textarea id=q placeholder="Where are mailboxes managed?"></textarea><button onclick="ask()">Ask</button></section>
 <section><h2>2. Inbox Agent</h2><select id=email></select><button onclick="draft()">Draft response</button></section>
-<section><h2>3. Meeting to Scope</h2><select id=meeting></select><button onclick="scope()">Create scope + estimate</button></section>
+<section><h2>3. Meeting to Scope</h2><select id=meeting></select><button onclick="scope()">Create scope + estimate</button><br><select id=followup></select><button onclick="compare()">Compare follow-up scope</button></section>
 <pre id=out>Loading examples…</pre>
-<script>const out=document.querySelector('#out');async function call(url,body){let r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});out.textContent=JSON.stringify(await r.json(),null,2)}async function ask(){call('/ask',{query:q.value})}async function draft(){call('/inbox/draft',{email_id:email.value})}async function scope(){call('/meetings/scope',{meeting_id:meeting.value})}async function load(){let e=await (await fetch('/inbox/emails')).json();email.innerHTML=e.map(x=>`<option value="${x.id}">${x.id}: ${x.subject}</option>`).join('');let m=await (await fetch('/meetings')).json();meeting.innerHTML=m.filter(x=>x.type==='initial').map(x=>`<option value="${x.meeting_id}">${x.client}</option>`).join('');out.textContent='Choose a workflow above.'}load()</script>"""
+<script>const out=document.querySelector('#out');const mode=document.querySelector('#mode');async function call(url,body){let r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});out.textContent=JSON.stringify(await r.json(),null,2)}async function ask(){call('/ask',{query:q.value})}async function draft(){call('/inbox/draft',{email_id:email.value})}async function scope(){call('/meetings/scope',{meeting_id:meeting.value})}async function compare(){call('/meetings/compare',{meeting_id:meeting.value,follow_up_meeting_id:followup.value})}async function load(){let h=await (await fetch('/health')).json();mode.textContent=h.mode==='mock'?'MOCK / SIMULATED MODE â€” deterministic local evidence; no live AI provider calls.':'LIVE PROVIDER MODE â€” verify provider and citations before use.';let e=await (await fetch('/inbox/emails')).json();email.innerHTML=e.map(x=>`<option value="${x.id}">${x.id}: ${x.subject}</option>`).join('');let m=await (await fetch('/meetings')).json();meeting.innerHTML=m.filter(x=>x.type==='initial').map(x=>`<option value="${x.meeting_id}">${x.client}</option>`).join('');followup.innerHTML=m.filter(x=>x.type==='follow_up').map(x=>`<option value="${x.meeting_id}">${x.client}: ${x.meeting_id}</option>`).join('');out.textContent='Choose a workflow above.'}load()</script>"""
 
 
 def create_app() -> Flask:
@@ -66,6 +66,18 @@ def create_app() -> Flask:
         except KeyError:
             return jsonify({"error": "Unknown meeting_id"}), 404
         return jsonify({"scope": scope, "proposal": meetings.create_proposal(scope)})
+
+    @app.post("/meetings/compare")
+    def meeting_compare() -> Any:
+        payload = request.get_json(silent=True) or {}
+        try:
+            original_scope = meetings.create_scope(meetings.load_transcript_by_id(payload.get("meeting_id", "")))
+            follow_up = meetings.load_transcript_by_id(payload.get("follow_up_meeting_id", ""))
+        except KeyError:
+            return jsonify({"error": "Unknown meeting_id or follow_up_meeting_id"}), 404
+        if follow_up.get("type") != "follow_up":
+            return jsonify({"error": "follow_up_meeting_id must identify a follow-up meeting"}), 400
+        return jsonify(meetings.compare_follow_up(original_scope, follow_up))
 
     return app
 

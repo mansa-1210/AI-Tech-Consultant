@@ -39,6 +39,7 @@ from knowledge_brain.answerer import (
     AnswerResult,
     Citation,
     KnowledgeAnswerer,
+    ProviderUnavailableError,
     is_mock_ai_enabled,
 )
 from knowledge_brain.retriever import (
@@ -287,6 +288,23 @@ def create_app(
             }
             return jsonify(response_data), 200
 
+        except (ProviderUnavailableError, ValueError) as err:
+            logger.warning("Configured %s provider unavailable: %s", default_answerer.provider, err)
+            return (
+                jsonify({
+                    "query": query_clean,
+                    "answer": "The configured AI provider is unavailable. No answer was generated.",
+                    "evidence_found": False,
+                    "evidence_status": "provider_unavailable",
+                    "citations": [],
+                    "mode": default_answerer.mode,
+                    "model": default_answerer.model,
+                    "is_mock": False,
+                    "provider": default_answerer.provider,
+                    "error": "Configured AI provider is unavailable",
+                }),
+                503,
+            )
         except Exception as err:
             logger.exception("Unexpected error processing question '%s': %s", query_clean, err)
             return (

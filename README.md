@@ -8,7 +8,7 @@ Three connected, local-first workflows for a software-services team:
 
 ## Run
 
-Windows PowerShell and Python 3.11+ are required. From the project root, this one command creates the local virtual environment when needed, installs dependencies, and starts the shared API and browser console:
+Windows PowerShell and Python 3.11+ are required. From the project root, this one command creates the local virtual environment when needed, installs dependencies, and starts the shared API and browser console. It exits safely when an instance already owns port 8501, so do not start a second copy for the same demo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\start.ps1
@@ -21,6 +21,8 @@ Open `http://127.0.0.1:8501`. In a second terminal, run tests as needed:
 ```
 
 Copy `.env.example` to `.env`. It defaults to `USE_MOCK_AI=true` for safe, deterministic local runs. To make paid live-model calls, explicitly set `USE_MOCK_AI=false` and configure either `AI_PROVIDER=claude` with `ANTHROPIC_API_KEY` or `AI_PROVIDER=gemini` with `GEMINI_API_KEY`. The `/health` endpoint reports the actual selected provider and model. Keep `.env` out of Git.
+
+When a live provider is unavailable (including quota exhaustion, timeouts, or malformed provider responses), `/ask` returns HTTP 503 with `evidence_status: provider_unavailable`. This is deliberately different from the normal `insufficient_evidence` response; Inbox and Meeting workflows hold their output for a human instead of claiming an answer was generated.
 
 For an incremental daily refresh, first review the source site's crawler policy, then register the included Windows Task Scheduler job. It writes the same `full_articles.json` corpus that the API serves:
 
@@ -42,7 +44,7 @@ Once that file is complete, the API automatically prefers it over the sample cor
 
 Set `KNOWLEDGE_BRAIN_DATA_PATH` only when using another JSON location.
 
-Open `http://127.0.0.1:8501/` for the compact demo screen. The Inbox and Meeting workflows are runnable modules and deliberately use the Knowledge Brain only through its HTTP endpoint.
+Open `http://127.0.0.1:8501/` for the compact demo screen. The Inbox and Meeting workflows are runnable modules and deliberately use the Knowledge Brain only through its HTTP endpoint. The Meeting section includes a follow-up comparison control, which reports added and removed scope only after canonical feature matching.
 
 ## Evaluation and limits
 

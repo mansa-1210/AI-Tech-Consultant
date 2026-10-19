@@ -20,6 +20,7 @@ from knowledge_brain.retriever import (
     extract_relevant_snippet,
     load_articles_from_json,
     main,
+    query_terms,
     tokenize,
 )
 
@@ -98,6 +99,10 @@ def test_tokenize_empty_and_punctuation():
     assert tokenize("") == []
     assert tokenize("   ") == []
     assert tokenize("!@#$%^&*()") == []
+
+
+def test_query_terms_excludes_generic_knowledge_base_words():
+    assert query_terms("What information is available in the knowledge base?") == []
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +227,20 @@ def test_retriever_irrelevant_query(sample_records: list[ArticleRecord]):
     retriever = KnowledgeRetriever(articles=sample_records)
     results = retriever.search("quantum gravity black hole astrophysics telescope")
     assert results == []
+
+
+def test_retriever_rejects_incidental_single_term_match(sample_records: list[ArticleRecord]):
+    """A document matching only one broad query term is not sufficient evidence."""
+    retriever = KnowledgeRetriever(articles=sample_records)
+    results = retriever.search("quantum gravity black hole astrophysics telescope")
+    assert results == []
+
+
+def test_retriever_results_include_query_evidence(sample_records: list[ArticleRecord]):
+    retriever = KnowledgeRetriever(articles=sample_records)
+    result = retriever.search("mass email newsletter", top_k=1)[0]
+    assert {"mass", "email", "newsletter"}.issubset(result.matched_terms)
+    assert result.query_coverage == 1.0
 
 
 def test_retriever_empty_and_whitespace_query(sample_records: list[ArticleRecord]):

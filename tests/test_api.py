@@ -422,6 +422,19 @@ class TestAppConfigAndCLI:
 
 
 class TestEscalationsAndDemo:
+    def test_live_provider_failure_returns_clear_safe_response(self, test_retriever: KnowledgeRetriever) -> None:
+        app = create_app(
+            retriever=test_retriever,
+            answerer=KnowledgeAnswerer(use_mock=False, provider="claude", api_key=""),
+        )
+        response = app.test_client().post("/ask", json={"query": "Where are mailboxes managed?"})
+        assert response.status_code == 503
+        data = response.get_json()
+        assert data["evidence_status"] == "provider_unavailable"
+        assert data["evidence_found"] is False
+        assert data["citations"] == []
+        assert data["is_mock"] is False
+
     def test_escalation_create_and_resolve(self, client: Client, tmp_path) -> None:
         client.application.config["ESCALATIONS_PATH"] = str(tmp_path / "escalations.json")
         created = client.post("/escalations", json={"question": "What is the refund policy?"})

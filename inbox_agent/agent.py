@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
@@ -25,6 +26,12 @@ RULES = {
     "custom_work": ("custom", "build", "integration", "develop", "new feature", "widget", "crm"),
     "account_access": ("login", "log in", "password", "access", "locked"),
     "support": ("email", "domain", "website", "member", "import", "campaign", "forward"),
+}
+GENERIC_EVIDENCE_TERMS = {
+    "about", "answer", "asking", "based", "contact", "create", "documentation",
+    "email", "from", "help", "information", "manage", "need", "please", "question",
+    "reaching", "settings", "support", "team", "that", "their", "there", "this", "where",
+    "with", "your",
 }
 
 
@@ -130,13 +137,46 @@ def feedback_summary() -> Dict[str, Dict[str, float | int]]:
 def ask_knowledge_brain(question: str) -> Dict[str, Any]:
     try:
         response = requests.post(KB_URL, json={"query": question}, timeout=8)
-        response.raise_for_status()
         data = response.json()
         if isinstance(data, dict):
+            if response.status_code >= 400:
+                return {
+                    "answer": "",
+                    "evidence_found": False,
+                    "evidence_status": data.get("evidence_status", "provider_unavailable"),
+                    "citations": [],
+                    "mode": data.get("mode", "unknown"),
+                    "is_mock": bool(data.get("is_mock", False)),
+                }
             return data
     except (requests.RequestException, ValueError):
         pass
-    return {"answer": "", "evidence_found": False, "evidence_status": "unavailable", "citations": [], "is_mock": True}
+    return {"answer": "", "evidence_found": False, "evidence_status": "provider_unavailable", "citations": [], "mode": "unknown", "is_mock": False}
+
+
+def _evidence_terms(text: str) -> set[str]:
+    terms = set()
+    for word in re.findall(r"[a-z0-9]+", text.lower()):
+        normalized = word[:-1] if word.endswith("s") and len(word) > 4 else word
+        if len(normalized) >= 3 and normalized not in GENERIC_EVIDENCE_TERMS:
+            terms.add(normalized)
+    return terms
+
+
+def evidence_is_relevant_to_email(email: Dict[str, Any], knowledge: Dict[str, Any]) -> bool:
+    """Require source metadata and answer text to overlap with email-specific terms."""
+    email_terms = _evidence_terms(f"{email.get('subject', '')} {email.get('body', '')}")
+    answer_terms = _evidence_terms(str(knowledge.get("answer", "")))
+    citation_text = " ".join(
+        f"{citation.get('title', '')} {citation.get('url', '')}"
+        for citation in knowledge.get("citations", [])
+        if isinstance(citation, dict)
+    )
+    citation_terms = _evidence_terms(citation_text)
+    overlapping_terms = email_terms & answer_terms
+    if not citation_terms:
+        return False
+    return len(overlapping_terms) >= 2 or any(len(term) >= 7 for term in overlapping_terms)
 
 
 def prepare_draft(email: Dict[str, Any], kb_result: Dict[str, Any] | None = None) -> Dict[str, Any]:
@@ -146,11 +186,20 @@ def prepare_draft(email: Dict[str, Any], kb_result: Dict[str, Any] | None = None
     closing = str(pattern.get("closing", "Please let us know if you need further help.\n\nBest regards,\nSupport Team"))
     prompt_version = str(pattern.get("version", PROMPT_VERSION))
     knowledge = kb_result if kb_result is not None else ask_knowledge_brain(email.get("subject", "") + "\n" + email.get("body", ""))
-    grounded = bool(knowledge.get("evidence_found")) and bool(knowledge.get("answer")) and bool(knowledge.get("citations"))
+    grounded = (
+        bool(knowledge.get("evidence_found"))
+        and bool(knowledge.get("answer"))
+        and bool(knowledge.get("citations"))
+        and evidence_is_relevant_to_email(email, knowledge)
+    )
+    evidence_status = str(knowledge.get("evidence_status", "insufficient_evidence"))
     if grounded:
         answer = str(knowledge["answer"]).replace("[MOCK MODE]", "").strip()
         draft_text = greeting + "\n\nThank you for contacting us. Based on our support documentation:\n\n" + answer + "\n\n" + closing
         status = "grounded_draft"
+    elif evidence_status == "provider_unavailable":
+        draft_text = greeting + "\n\nThank you for reaching out. Our support drafting service is temporarily unavailable, so Iâ€™m escalating this to a human support team member. Weâ€™ll follow up with a verified answer.\n\n" + closing
+        status = "provider_unavailable"
     else:
         draft_text = greeting + "\n\nThank you for reaching out. To avoid giving inaccurate information, I’m escalating your question to our support team for confirmation. We’ll follow up once we have a verified answer.\n\n" + closing
         status = "human_escalation"
@@ -161,9 +210,9 @@ def prepare_draft(email: Dict[str, Any], kb_result: Dict[str, Any] | None = None
         "draft_hash": _text_hash(draft_text),
         "status": status,
         "citations": knowledge.get("citations", []) if grounded else [],
-        "evidence_status": knowledge.get("evidence_status", "unknown"),
+        "evidence_status": evidence_status,
         "mode": knowledge.get("mode", "unknown"),
-        "is_mock": bool(knowledge.get("is_mock", True)),
+        "is_mock": bool(knowledge.get("is_mock", False)),
         "prompt_version": prompt_version,
         "review_required": True,
         "auto_send_eligible": False,

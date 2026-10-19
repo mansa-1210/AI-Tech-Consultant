@@ -4,7 +4,9 @@ from app import create_app
 def test_console_has_all_three_workflows(monkeypatch):
     app = create_app()
     client = app.test_client()
-    assert client.get("/").status_code == 200
+    console = client.get("/")
+    assert console.status_code == 200
+    assert "MOCK / SIMULATED MODE" in console.get_data(as_text=True)
     assert len(client.get("/inbox/emails").get_json()) >= 50
     assert len(client.get("/meetings").get_json()) >= 4
 
@@ -17,3 +19,6 @@ def test_console_draft_and_scope(monkeypatch):
     response = client.post("/meetings/scope", json={"meeting_id": "MEETING-001"})
     assert response.status_code == 200
     assert response.get_json()["proposal"]["client_send_allowed"] is False
+    comparison = client.post("/meetings/compare", json={"meeting_id": "MEETING-001", "follow_up_meeting_id": "MEETING-001-FU1"})
+    assert comparison.status_code == 200
+    assert comparison.get_json()["requires_reestimate"] is True

@@ -7,9 +7,21 @@ def test_grounded_draft():
     e={"id":"1","subject":"email account","body":"manage email"}
     kb={"answer":"Use Email Accounts settings.","evidence_found":True,"citations":[{"title":"Email Accounts","url":"https://example.com"}],"evidence_status":"found","is_mock":True}
     d=agent.prepare_draft(e,kb); assert d["status"]=="grounded_draft" and d["citations"] and d["review_required"]
+def test_irrelevant_citations_are_not_presented_as_email_evidence():
+    email={"id":"commerce","subject":"E-commerce AI support", "body":"Can the AI assistant handle our online store orders?"}
+    kb={"answer":"Configure domains and mailboxes in Email Accounts.","evidence_found":True,"citations":[{"title":"Domains and Mailboxes","url":"https://example.test/domains-mailboxes"}],"evidence_status":"found","is_mock":True}
+    draft=agent.prepare_draft(email,kb)
+    assert draft["status"] == "human_escalation"
+    assert draft["citations"] == []
+    assert draft["review_required"] is True
 def test_missing_evidence_escalates():
     d=agent.prepare_draft({"id":"2","subject":"refund","body":"refund?"},{"answer":"","evidence_found":False,"citations":[]})
     assert d["status"]=="human_escalation" and not d["citations"]
+def test_provider_failure_is_not_reported_as_insufficient_evidence():
+    d=agent.prepare_draft({"id":"2","subject":"mailbox","body":"mailbox?"},{"answer":"","evidence_found":False,"citations":[],"evidence_status":"provider_unavailable","is_mock":False})
+    assert d["status"] == "provider_unavailable"
+    assert d["evidence_status"] == "provider_unavailable"
+    assert d["review_required"] is True
 def test_invalid_review_decision():
     with pytest.raises(ValueError): agent.record_review({"id":"3"},{"category":"support"},"send")
 def test_threshold_and_revocation(tmp_path,monkeypatch):

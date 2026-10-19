@@ -49,6 +49,16 @@ MOCK_PREFIX = "[MOCK MODE]"
 DEFAULT_MOCK_MODEL = "mock-deterministic-grounded"
 DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
 
+
+class ProviderUnavailableError(RuntimeError):
+    """A configured provider rejected, timed out, or malformed a live request."""
+
+    def __init__(self, provider: str, cause: Exception) -> None:
+        self.provider = provider
+        self.cause = cause
+        super().__init__(f"{provider} provider is unavailable")
+
+
 # System prompt for Claude to enforce strict grounding and citations
 CLAUDE_GROUNDED_SYSTEM_PROMPT = f"""You are an expert AI Technical Consultant specializing in the Brilliant Directories platform.
 Your task is to answer technical and product questions accurately, grounded ONLY in the provided documentation context.
@@ -59,6 +69,7 @@ STRICT GROUNDING GUIDELINES:
 "{INSUFFICIENT_EVIDENCE_PHRASE}"
 3. Do not speculate or offer unverified advice.
 4. Include clear citations with the article title and original URL for all facts and claims cited in your response.
+5. Cite only sources whose supplied evidence excerpt directly supports the claim. Do not use outside knowledge.
 """
 
 
@@ -512,7 +523,7 @@ def generate_claude_answer(
 
     visual_evidence = collect_visual_evidence(search_results)
     for idx, res in enumerate(search_results, start=1):
-        content = res.article.text if (res.article and res.article.text) else res.snippet
+        content = res.snippet
         visual_context = "\n".join(
             f"Image description ({item['source']}): {item['description']}" for item in res.visual_evidence
         )
@@ -533,12 +544,15 @@ def generate_claude_answer(
     )
 
     client = anthropic.Anthropic(api_key=resolved_key)
-    response = client.messages.create(
-        model=model,
-        max_tokens=1024,
-        system=CLAUDE_GROUNDED_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
+    try:
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            system=CLAUDE_GROUNDED_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_message}],
+        )
+    except Exception as error:
+        raise ProviderUnavailableError("claude", error) from error
 
     answer_text = ""
     for block in response.content:
@@ -600,11 +614,7 @@ def generate_gemini_answer(
 
     visual_evidence = collect_visual_evidence(search_results)
     for index, result in enumerate(search_results, start=1):
-        content = (
-            result.article.text
-            if result.article and result.article.text
-            else result.snippet
-        )
+        content = result.snippet
         visual_context = "\n".join(
             f"Image description ({item['source']}): {item['description']}" for item in result.visual_evidence
         )
@@ -637,10 +647,13 @@ USER QUESTION:
 """
 
     client = genai.Client(api_key=resolved_key)
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-    )
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+        )
+    except Exception as error:
+        raise ProviderUnavailableError("gemini", error) from error
     answer_text = (response.text or "").strip()
 
     if not answer_text:
